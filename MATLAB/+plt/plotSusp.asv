@@ -2,30 +2,36 @@ function plotSusp(P,linefrmt,rTyre)
 
 %upper wishbone
 b1 = [P(:,1), P(:,2), P(:,3)];
-plotBody(b1, linefrmt, 'r'); hold on
+plt.plotBody(b1, linefrmt, 'r'); hold on
 
 %lower wishbone
 b2 = [P(:,4), P(:,5), P(:,6)];
-plotBody(b2,linefrmt,'g');
+plt.plotBody(b2,linefrmt,'g');
 
-%push-rod
+%upright axis
+b2 = [P(:,3), P(:,6), P(:,10)];
+plt.plotBody(b2,linefrmt,'k');
+
+%damper axis
 b3 = [P(:,7), P(:,8)];
-plotBody(b3,linefrmt,'b');
+plt.plotBody(b3,linefrmt,'b');
+
+%spring axis
+b5 = [P(:,11), P(:,12)];
+plt.plotBody(b5,linefrmt,'b');
 
 %track-rod
 b4 = [P(:,9), P(:,10)];
-plotBody(b4,linefrmt,'c');
+plt.plotBody(b4,linefrmt,'c');
 
-b5 = [P(:,11), P(:,12)];
-plotBody(b5,linefrmt,'b');
 
 %wheel axis
 b6 = [P(:,13), P(:,14)];
-plotBody(b6,linefrmt,'k');
+plt.plotBody(b6,linefrmt,'k');
 
 % aCamber0 = -90+(acosd(dot(HP(:,14)-HP(:,13), [0;0;1])/norm(HP(:,14)-HP(:,13))));
 % aToe0 = 90-(acosd(dot(HP(:,14)-HP(:,13), [1;0;0])/norm(HP(:,14)-HP(:,13))));
-% plotTyre(P(:,14),rTyre,aCamber0,aToe0);
+% plt.plotTyre(P(:,14),rTyre,aCamber0,aToe0);
 
 % bodies(:,:,1) = [P1;P2];            %chassis
 % bodies(:,:,2) = [P1;P2];            %upper link (wishbone)

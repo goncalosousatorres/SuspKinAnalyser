@@ -1,4 +1,4 @@
-function err = kinSolver(x, P, ConsMat,LockMat,distVec)
+function err = kinCost(x, P, ConsMat,LockMat,distVec)
 
 %1)update hardpoint matrix
 P(~LockMat) = x(:);
