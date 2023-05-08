@@ -11,12 +11,12 @@ trackWidth = 1230;
 
 %upper wishbone
 P1 = [-90.99; 248.40; 229.52];         %upper wishbone front pivot
-P2 = [93.51; 248.40; 232.76];          %lower wishbone front pivot
+P2 = [93.51; 248.40; 232.76];          %upper wishbone front pivot
 P3 = [10.33; 580.92; 289.53];          %upper wishbone outer ball joint
 
 
 %lower wishbone
-P4 = [-96.60; 219.66; 93.44];            %lower wishbone front pivot
+P4 = [-96.60; 219.66; 93.44];           %lower wishbone front pivot
 P5 = [76.97; 219.66; 105.60];           %lower wishbone rear pivot
 P6 = [-5.94; 593.18; 103.53];           %lower wishbone outer ball joint
 
@@ -37,7 +37,7 @@ P13 = [0.00; 585.00; 196.53];           %wheel spindle point
 P14 = [0.00; 615.00; 196.53];           %wheel centre point
 
 %tyre
-P15 = [0.00; trackWidth/2; 0.00];             %contact patch
+P15 = [0.00; trackWidth/2; 0.00];       %contact patch
 
 HP = [P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14];
 
@@ -67,7 +67,7 @@ ConsMat(8,1:3) = 1;              %damper wishbone constraint
 ConsMat(10,[3,6,9]) = 1;         %tie-rod constraint
 ConsMat(12,1:3) = 1;             %spring wishbone constraint
 ConsMat(13,[3,6,10]) = 1;        %spindle constraint
-ConsMat(14,[3,6,10,13]) = 1;     %wheel center constraint
+ConsMat(14,[3,6,10]) = 1;        %wheel center constraint
 
 %Distance Matrix (created from constraint matrix)
 DistMat = squareform(pdist(HP'));
@@ -91,6 +91,7 @@ aCamber = NaN(size(dZ));
 aToe = NaN(size(dZ));
 aKingpin = NaN(size(dZ));
 aCaster = NaN(size(dZ));
+fval = NaN(size(dZ));
 
 %Set solver options
 options = optimoptions("fsolve",'Display','none','Algorithm','levenberg-marquardt');
@@ -116,7 +117,7 @@ aKingpin(i) = 90-(acosd(dot(HP(:,6)-HP(:,3), [0;1;0])/norm(HP(:,6)-HP(:,3))));
 aCaster(i) = 90-(acosd(dot(HP(:,6)-HP(:,3), [-1;0;0])/norm(HP(:,6)-HP(:,3))));
 aCamber(i) = -90+(acosd(dot(HP(:,14)-HP(:,13), [0;0;1])/norm(HP(:,14)-HP(:,13))));
 aToe(i) = 90-(acosd(dot(HP(:,14)-HP(:,13), [1;0;0])/norm(HP(:,14)-HP(:,13))));
-
+fval(i) = sum(val);
 end
 
 subplot(2,4,3); plot(-25:1:25,aKingpin); title('Kingpin Angle'); xlabel('Wheel Travel [mm]'); ylabel('Kingpin Angle [deg]');
@@ -124,8 +125,8 @@ subplot(2,4,4); plot(-25:1:25,aCaster); title('Caster Angle'); xlabel('Wheel Tra
 subplot(2,4,7); plot(-25:1:25,aCamber); title('Camber Angle'); xlabel('Wheel Travel [mm]'); ylabel('Camber Angle [deg]');
 subplot(2,4,8); plot(-25:1:25,aToe); title('Toe Angle'); xlabel('Wheel Travel [mm]'); ylabel('Toe Angle [deg]');
 
-
-
+figure
+plot(-25:1:25, fval);
 
 
 

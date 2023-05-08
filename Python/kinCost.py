@@ -6,4 +6,4 @@ def kinCost(x, *data):
     P[~LockMat] = x
     dMat = sp.spatial.distance.squareform(sp.spatial.distance.pdist(np.transpose(P)))
     dVec = dMat[ConsMat]
-    return abs(dVec - distVec)
+    return (dVec - distVec)**2

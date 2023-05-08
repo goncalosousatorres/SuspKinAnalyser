@@ -8,6 +8,6 @@ dMat = squareform(pdist(P'));
 dVec = dMat(ConsMat);
 
 %3) calculate errors
-err = abs(dVec - distVec);
+err = (dVec - distVec).^2;
 
 end

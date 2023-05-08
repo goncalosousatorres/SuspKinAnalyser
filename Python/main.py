@@ -1,7 +1,11 @@
 import numpy as np
 import scipy as sp
+from roll_centre import roll_centre
 from kinCost import kinCost
 import matplotlib.pyplot as plt
+from plot_susp import plot_susp, get_virtual
+
+track = 615 * 2
 
 '''Hardpoint definition'''
 
@@ -20,7 +24,7 @@ P7 = np.array([10.33, 162.54, 570.00])  # damper body end
 P8 = np.array([10.33, 527.89, 299.63])  # damper wishbone end
 
 # tie-rod
-P9  = np.array([32.00, 217.97, 119.76])  # inner track rod ball joint
+P9 = np.array([32.00, 217.97, 119.76])  # inner track rod ball joint
 P10 = np.array([62.00, 550.00, 133.55])  # outer track rod ball joint
 
 # spring axis
@@ -32,30 +36,42 @@ P13 = np.array([0.00, 585.00, 196.53])  # wheel spindle point
 P14 = np.array([0.00, 615.00, 196.53])  # wheel centre point
 
 # #tyre
-# P15 = np.array([0.00, 615.00; 0.00])  # contact patch
+P15 = np.array([0.00, 615.00, 0.00])  # contact patch
 
 HP = np.array([P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14])
 HP = np.transpose(HP)
 
+# '''Virtual Points'''
+# VP = get_virtual(HP)
+#
 '''Unit vectors'''
 i_hat = np.array([1, 0, 0])
 j_hat = np.array([0, 1, 0])
 k_hat = np.array([0, 0, 1])
-
-'''Static Suspension Metrics'''
-aKingpin0 = 90-np.rad2deg((np.arccos(np.dot(HP[:, 5]-HP[:, 2], j_hat)/np.linalg.norm(HP[:, 5]-HP[:, 2]))))
-aCaster0 = 90-np.rad2deg((np.arccos(np.dot(HP[:, 5]-HP[:, 2], -i_hat)/np.linalg.norm(HP[:, 5]-HP[:, 2]))))
-aCamber0 = -90+np.rad2deg(np.arccos(np.dot(HP[:, 13]-HP[:, 12], k_hat)/np.linalg.norm(HP[:, 13]-HP[:, 12])))
-aToe0 = 90-np.rad2deg(np.arccos(np.dot(HP[:, 13]-HP[:, 12], i_hat)/np.linalg.norm(HP[:, 13]-HP[:, 12])))
-lKingpin = np.linalg.norm(HP[:, 5]-HP[:, 2])
-lTieRod = np.linalg.norm(HP[:, 9]-HP[:, 8])
-# todo: scrub radius, mechanical trail, kingpin offset
+#
+# '''Static Suspension Metrics'''
+# RCz0 = VP[1, 5]
+# FVSAL = HP[1, -1] - VP[1, 4]
+# aKingpin0 = 90-np.rad2deg((np.arccos(np.dot(HP[:, 5]-HP[:, 2], j_hat)/np.linalg.norm(HP[:, 5]-HP[:, 2]))))
+# aCaster0 = 90-np.rad2deg((np.arccos(np.dot(HP[:, 5]-HP[:, 2], -i_hat)/np.linalg.norm(HP[:, 5]-HP[:, 2]))))
+# aCamber0 = -90+np.rad2deg(np.arccos(np.dot(HP[:, 13]-HP[:, 12], k_hat)/np.linalg.norm(HP[:, 13]-HP[:, 12])))
+# aToe0 = 90-np.rad2deg(np.arccos(np.dot(HP[:, 13]-HP[:, 12], i_hat)/np.linalg.norm(HP[:, 13]-HP[:, 12])))
+# lKingpin = np.linalg.norm(HP[:, 5]-HP[:, 2])
+# lTieRod = np.linalg.norm(HP[:, 9]-HP[:, 8])
+# dTrack0 = 2 * RCz0 / track
+# dCamberBump0 = -1 / FVSAL
+# dCamberRoll0 = -(track/2 - FVSAL) / FVSAL
+# print(dCamberRoll0)
+# # todo: scrub radius, mechanical trail, kingpin offset, dCamberRoll
+#
+# '''Plotting'''
+# plot_susp(HP, virtual=True, mirror=True)
 
 '''Constraints and Locked Points'''
 # Create constraint matrix
 ConsMat = np.zeros((HP.shape[1], HP.shape[1]), dtype='bool')
 ConsMat[2, 0:2] = True  # upper ball joint constraint
-ConsMat[5, 2:4] = True  # lower ball joint constraint
+ConsMat[5, 2:5] = True  # lower ball joint constraint
 ConsMat[7, 0:3] = True  # damper wishbone constraint
 ConsMat[9, [2, 5, 8]] = True  # tie-rod constraint
 ConsMat[11, 0:3] = True  # spring wishbone constraint
@@ -82,6 +98,7 @@ aCamber = np.empty(dZ.shape)
 aToe = np.empty(dZ.shape)
 aKingpin = np.empty(dZ.shape)
 aCaster = np.empty(dZ.shape)
+fval = np.empty(dZ.shape)
 
 for i, z in enumerate(dZ):
     # 1) update wheel centre coordinate
@@ -92,7 +109,10 @@ for i, z in enumerate(dZ):
 
     # 3) solve system of nonlinear equations
     data = (HP, ConsMat, LockMat, DistVec)
-    xSol = sp.optimize.fsolve(kinCost, initGuess, args=data)
+    #out = sp.optimize.fsolve(kinCost, initGuess, args=data)
+    out = sp.optimize.root(kinCost, initGuess, args=data, method='lm')
+
+    xSol = out['x']
 
     # 4) extract solution
     HP[~LockMat] = xSol
@@ -102,8 +122,10 @@ for i, z in enumerate(dZ):
     aCaster[i] = 90 - np.rad2deg((np.arccos(np.dot(HP[:, 5] - HP[:, 2], -i_hat) / np.linalg.norm(HP[:, 5] - HP[:, 2]))))
     aCamber[i] = -90 + np.rad2deg(np.arccos(np.dot(HP[:, 13] - HP[:, 12], k_hat) / np.linalg.norm(HP[:, 13] - HP[:, 12])))
     aToe[i] = 90 - np.rad2deg(np.arccos(np.dot(HP[:, 13] - HP[:, 12], i_hat) / np.linalg.norm(HP[:, 13] - HP[:, 12])))
+    fval[i] = sum(out['fun'])
 
-plt.plot(dZ, aToe)
+
+plt.plot(dZ, aCamber)
 plt.show()
 
 
